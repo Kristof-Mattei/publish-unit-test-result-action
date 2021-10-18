@@ -149,6 +149,7 @@ class Publisher:
     def get_check_run_from_list(self, runs: List[CheckRun]) -> Optional[CheckRun]:
         # filter for runs with the same name as configured
         runs = [run for run in runs if run.name == self._settings.check_name]
+        logger.log(runs)
         logger.debug(f'there are {len(runs)} check runs with title {self._settings.check_name}')
         if len(runs) == 0:
             return None
