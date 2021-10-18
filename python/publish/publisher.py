@@ -216,7 +216,21 @@ class Publisher:
         all_annotations = error_annotations + case_annotations + file_list_annotations
 
         # we can send only 50 annotations at once, so we split them into chunks of 50
-        check_run = None
+        check_run = self.get_check_run(self._settings.commit) # let's see if we have one with the name we want
+        if check_run is None:
+            output = dict(
+                title="",
+                summary="",
+                annotations=[]
+            )
+
+            check_run = self._repo.create_check_run(name=self._settings.check_name,
+                                                    head_sha=self._settings.commit,
+                                                    status='completed',
+                                                    conclusion=conclusion,
+                                                    output=output)
+            logger.debug(f'created check {check_run}')
+
         all_annotations = [all_annotations[x:x+50] for x in range(0, len(all_annotations), 50)] or [[]]
         for annotations in all_annotations:
             output = dict(
@@ -225,13 +239,8 @@ class Publisher:
                 annotations=[annotation.to_dict() for annotation in annotations]
             )
 
-            logger.info('creating check')
-            check_run = self._repo.create_check_run(name=self._settings.check_name,
-                                                    head_sha=self._settings.commit,
-                                                    status='completed',
-                                                    conclusion=conclusion,
-                                                    output=output)
-            logger.debug(f'created check {check_run}')
+            check_run.edit(output=output)
+
         return check_run
 
     @staticmethod
